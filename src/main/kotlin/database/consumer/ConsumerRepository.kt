@@ -1,0 +1,5 @@
+package ru.utilityorders.backend.database.consumer
+
+interface ConsumerRepository
+
+class ConsumerRepositoryImpl: ConsumerRepository
