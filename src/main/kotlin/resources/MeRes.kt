@@ -3,10 +3,10 @@ package ru.utilityorders.backend.resources
 import io.ktor.resources.Resource
 
 @Resource("me")
-data class WorkerMe(val parent: ApiRes = ApiRes()) {
+data class MeRes(val parent: ApiRes = ApiRes()) {
 
     @Resource("orders")
-    data class Orders(val parent: WorkerMe = WorkerMe()) {
+    data class Orders(val parent: MeRes = MeRes()) {
 
         @Resource("{id}")
         data class Order(val id: String, val parent: Orders = Orders()) {
@@ -16,6 +16,9 @@ data class WorkerMe(val parent: ApiRes = ApiRes()) {
         }
     }
 
+    @Resource("create_order")
+    data class CreateOrder(val parent: MeRes = MeRes())
+
     @Resource("logout")
-    data class Logout(val parent: WorkerMe = WorkerMe())
+    data class Logout(val parent: MeRes = MeRes())
 }

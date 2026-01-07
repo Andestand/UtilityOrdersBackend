@@ -1,6 +1,7 @@
 package ru.utilityorders.backend.database.orders
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
 
 object OrdersTable: UUIDTable("orders") {
@@ -12,4 +13,5 @@ object OrdersTable: UUIDTable("orders") {
     val status = integer("status")
     val atWork = bool("at_work")
     val dateOfAdded = timestampWithTimeZone("date_of_added")
+    val executionDate = date("execution_date")
 }

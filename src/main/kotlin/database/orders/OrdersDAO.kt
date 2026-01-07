@@ -17,4 +17,5 @@ class OrdersDAO(id: EntityID<UUID>): UUIDEntity(id) {
     var status by OrdersTable.status
     var atWork by OrdersTable.atWork
     var dateOfAdded by OrdersTable.dateOfAdded
+    var executionDate by OrdersTable.executionDate
 }
