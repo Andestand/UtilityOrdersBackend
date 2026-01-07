@@ -3,7 +3,6 @@ package ru.utilityorders.backend.database.worker
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
-import ru.utilityorders.backend.database.worker.WorkerTable
 import java.util.UUID
 
 class WorkerDAO(id: EntityID<UUID>): UUIDEntity(id) {

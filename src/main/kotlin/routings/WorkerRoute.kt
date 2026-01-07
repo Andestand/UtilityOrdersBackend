@@ -17,8 +17,11 @@ import ru.utilityorders.backend.entities.Message
 import ru.utilityorders.backend.entities.ProfileResponse
 import ru.utilityorders.backend.entities.ResultList
 import ru.utilityorders.backend.entities.SignUpRequest
-import ru.utilityorders.backend.resources.WorkerMe
+import ru.utilityorders.backend.resources.MeRes
 import ru.utilityorders.backend.resources.Worker
+import ru.utilityorders.backend.utils.INCORRECT_ID
+import ru.utilityorders.backend.utils.ORDER_NOT_FOUND
+import ru.utilityorders.backend.utils.USER_DOES_NOT_EXIST
 import ru.utilityorders.backend.utils.checkingPassword
 import ru.utilityorders.backend.utils.createAccessJWT
 import ru.utilityorders.backend.utils.toDB
@@ -33,69 +36,95 @@ fun Route.workerRoute(
     val jwtSecret = environment.config.property(JWT_SECRET).getString()
 
     authenticate {
-        get<WorkerMe> {
-            val uid = call.principal<String>()
-            val user = workerRepository.findUserByUID(UUID.fromString(uid))
+        get<MeRes> {
+            val uid = call.principal<UUID>()
 
-            if (user != null)
-                call.respond(
-                    HttpStatusCode.OK,
-                    ProfileResponse(
-                        id = user.id.toString(),
-                        firstName = user.firstName,
-                        lastName = user.lastName,
-                        surname = user.surname,
-                        dateOfBirth = user.dateOfBirth.toString(),
-                        dateOfRegistration = user.dateOfRegistration.toString()
+            if (uid != null) {
+                val user = workerRepository.findUserByUID(uid)
+
+                if (user != null)
+                    call.respond(
+                        HttpStatusCode.OK,
+                        ProfileResponse(
+                            id = user.id.toString(),
+                            firstName = user.firstName,
+                            lastName = user.lastName,
+                            surname = user.surname,
+                            dateOfBirth = user.dateOfBirth.toString(),
+                            dateOfRegistration = user.dateOfRegistration.toString()
+                        )
                     )
-                )
+                else
+                    call.respond(HttpStatusCode.BadRequest, Message(USER_DOES_NOT_EXIST))
+            } else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
         }
 
-        get<WorkerMe.Orders> {
-            val uid = call.principal<String>()
+        get<MeRes.Orders> {
+            val uid = call.principal<UUID>()
 
-            val list = ordersRepository.getOrdersByUser(UUID.fromString(uid)).toSerial()
-
-            call.respond(
-                status = HttpStatusCode.OK,
-                message = ResultList(list, list.size)
-            )
+            if (uid != null) {
+                val list = ordersRepository.getOrdersByWorkerID(uid).toSerial()
+                call.respond(HttpStatusCode.OK, ResultList(list, list.size))
+            } else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
         }
 
-        get<WorkerMe.Orders.Order> {
+        get<MeRes.Orders.Order> {
             try {
                 val id = UUID.fromString(it.id)
+                val order = ordersRepository.findOrderByID(id)
 
+                if (order != null)
+                    call.respond(HttpStatusCode.OK, order.toSerial())
+                else
+                    call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
 
             } catch (_: IllegalArgumentException) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    Message("")
-                )
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
             }
         }
 
-        post<WorkerMe.Orders.Order.ProceedToOrder> {
-            val uid = call.principal<String>()
+        post<MeRes.Orders.Order.ProceedToOrder> {
+            val uid = call.principal<UUID>()
 
-            ordersRepository.atWork(
-                uid = UUID.fromString(uid),
-                orderID = UUID.fromString(it.parent.id),
-                value = true
-            )
-            call.respond(HttpStatusCode.OK)
+            if (uid != null)
+                try {
+                    val orderID = UUID.fromString(it.parent.id)
+                    val order = ordersRepository.findOrderByID(orderID)
+
+                    if (order != null) {
+                        ordersRepository.atWork(
+                            uid = uid,
+                            orderID = orderID,
+                            value = true
+                        )
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+                    else
+                        call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+                } catch (_: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+                }
+            else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
         }
 
-        post<WorkerMe.Logout> {
-            val uid = call.principal<String>()
+        post<MeRes.Logout> {
+            val uid = call.principal<UUID>()
 
-            workerRepository.updateUserSecret(UUID.fromString(uid))
+            if (uid != null) {
+                workerRepository.updateUserSecret(uid)
+                call.respond(HttpStatusCode.NoContent)
+            } else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
         }
     }
 
     post<Worker.SignIn> {
         val receive = call.receive<String>()
         val usersTokenList = workerRepository.usersTokenList()
+
         var currentUid: UUID? = null
         var currentUserSecret: String? = null
 
@@ -113,10 +142,7 @@ fun Route.workerRoute(
                 JwtResponse(createAccessJWT(currentUid.toString(), currentUserSecret, jwtSecret))
             )
         else
-            call.respond(
-                HttpStatusCode.BadRequest,
-                Message("Такого пользователя не существует.")
-            )
+            call.respond(HttpStatusCode.BadRequest, Message(USER_DOES_NOT_EXIST))
     }
 
     post<Worker.SignUp> {

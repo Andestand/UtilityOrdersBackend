@@ -2,8 +2,8 @@ package ru.utilityorders.backend.database.worker
 
 import de.mkammerer.argon2.Argon2
 import org.jetbrains.exposed.sql.update
-import ru.utilityorders.backend.database.entities.AddUserDB
-import ru.utilityorders.backend.database.entities.CredentialsUserDB
+import ru.utilityorders.backend.database.entities.AddWorkerDB
+import ru.utilityorders.backend.database.entities.CredentialsWorkerDB
 import ru.utilityorders.backend.database.entities.WorkerDB
 import ru.utilityorders.backend.utils.generateUserToken
 import ru.utilityorders.backend.utils.passwordToHash
@@ -14,19 +14,21 @@ import java.util.UUID
 
 interface WorkerRepository {
 
-    suspend fun addUser(user: AddUserDB): String
+    suspend fun addUser(user: AddWorkerDB): String
 
     suspend fun findUserByToken(token: String): Pair<UUID, String>?
 
     suspend fun findUserByUID(uid: UUID): WorkerDB?
 
-    suspend fun usersTokenList(): List<CredentialsUserDB>
+    suspend fun usersTokenList(): List<CredentialsWorkerDB>
+
+    suspend fun workerList(): List<WorkerDB>
 
     suspend fun updateUserSecret(uid: UUID): Boolean
 }
 
 class WorkerRepositoryImpl(private val argon: Argon2): WorkerRepository {
-    override suspend fun addUser(user: AddUserDB) =
+    override suspend fun addUser(user: AddWorkerDB) =
         suspendTransaction {
             val newToken = generateUserToken()
 
@@ -66,12 +68,17 @@ class WorkerRepositoryImpl(private val argon: Argon2): WorkerRepository {
         suspendTransaction {
             WorkerDAO.all()
                 .map {
-                    CredentialsUserDB(
+                    CredentialsWorkerDB(
                         id = it.id.value,
                         userToken = it.userToken,
                         userSecret = it.userSecret
                     )
                 }
+        }
+
+    override suspend fun workerList() =
+        suspendTransaction {
+            WorkerDAO.all().map { it.toDB() }
         }
 
     override suspend fun updateUserSecret(uid: UUID) =

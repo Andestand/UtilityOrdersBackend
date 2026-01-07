@@ -10,5 +10,6 @@ data class WorkerDB(
     val lastName: String,
     val surname: String,
     val dateOfBirth: LocalDate,
+    val limit: Int,
     val dateOfRegistration: OffsetDateTime
 )

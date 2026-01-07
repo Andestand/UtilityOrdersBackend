@@ -10,6 +10,8 @@ import io.ktor.server.response.respond
 import ru.utilityorders.backend.core.JWT_REALM
 import ru.utilityorders.backend.core.JWT_SECRET
 import ru.utilityorders.backend.entities.Message
+import ru.utilityorders.backend.utils.AUTHORIZATION_REQUIRED
+import java.util.UUID
 
 fun Application.securityPlugin() {
     val secret = environment.config.property(JWT_SECRET).getString()
@@ -24,13 +26,14 @@ fun Application.securityPlugin() {
             }
 
             challenge { _, _ ->
-                call.respond(
-                    HttpStatusCode.Unauthorized,
-                    Message("Требуется авторизация.")
-                )
+                call.respond(HttpStatusCode.Unauthorized, Message(AUTHORIZATION_REQUIRED))
             }
 
-            validate { it.subject }
+            validate {
+                try {
+                    UUID.fromString(it.subject)
+                } catch (_: IllegalArgumentException) { null }
+            }
 
             this.realm = realm
         }

@@ -29,7 +29,9 @@ fun Application.mainRouting() {
         )
         consumerRoute(
             argon2 = argon2,
-            repository = consumerRepository
+            consumerRepository = consumerRepository,
+            ordersRepository = ordersRepository,
+            workerRepository = workerRepository,
         )
     }
 }

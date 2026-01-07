@@ -2,7 +2,7 @@ package ru.utilityorders.backend.database.entities
 
 import kotlinx.datetime.LocalDate
 
-data class AddUserDB(
+data class AddWorkerDB(
     val firstName: String,
     val lastName: String,
     val surname: String,
