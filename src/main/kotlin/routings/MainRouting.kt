@@ -19,7 +19,7 @@ fun Application.mainRouting() {
 
     routing {
         get<RootRes> {
-            call.respondText("Hello World!")
+            call.respondText("Пошёл нахуй")
         }
 
         workerRoute(
