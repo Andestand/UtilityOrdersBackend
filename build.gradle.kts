@@ -9,6 +9,16 @@ version = "0.0.1"
 
 application {
     mainClass = "ru.utilityorders.backend.ApplicationKt"
+    applicationDefaultJvmArgs = listOf(
+        "-Xmx384m",
+        "-Xms128m",
+        "-XX:+UseSerialGC",
+        "-Xss256K"
+    )
+}
+
+tasks.withType<Jar> {
+    archiveFileName = "UtilityOrdersBackend.jar"
 }
 
 dependencies {
