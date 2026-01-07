@@ -9,10 +9,12 @@ object ConsumerTable: UUIDTable("consumers") {
     val lastName = varchar("last_name", 50).nullable()
     val surname = varchar("surname", 50).nullable()
 
-    val address = text("address")
+    val address = text("address").nullable()
 
     val email = text("email").uniqueIndex()
     val password = text("password").uniqueIndex()
+
+    val userSecret = text("user_secret")
 
     val dateOfRegistration = timestampWithTimeZone("date_of_registration")
 }

@@ -9,5 +9,13 @@ class ConsumerDAO(id: EntityID<UUID>): UUIDEntity(id) {
 
     companion object: UUIDEntityClass<ConsumerDAO>(ConsumerTable)
 
+    var firstName by ConsumerTable.firstName
+    var email by ConsumerTable.email
+    var password by ConsumerTable.password
 
+    var address by ConsumerTable.address
+
+    var userSecret by ConsumerTable.userSecret
+
+    var dateOfRegistration by ConsumerTable.dateOfRegistration
 }
