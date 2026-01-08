@@ -11,7 +11,6 @@ object OrdersTable: UUIDTable("orders") {
     val costOfWork = decimal("cost_of_work", 20, 2)
     val address = text("address")
     val status = integer("status")
-    val atWork = bool("at_work")
     val dateOfAdded = timestampWithTimeZone("date_of_added")
     val executionDate = date("execution_date")
 }

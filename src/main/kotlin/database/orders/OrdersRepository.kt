@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.update
 import ru.utilityorders.backend.database.entities.OrderDB
+import ru.utilityorders.backend.entities.OrderFulfillmentStatus
 import ru.utilityorders.backend.utils.suspendTransaction
 import ru.utilityorders.backend.utils.toDB
 import java.math.BigDecimal
@@ -28,9 +29,11 @@ interface OrdersRepository {
 
     suspend fun getOrdersByConsumerID(id: UUID): List<OrderDB>
 
-    suspend fun findOrderByID(id: UUID): OrderDB?
+    suspend fun findOrderByIdAndWorkerId(uid: UUID, orderID: UUID): OrderDB?
 
-    suspend fun atWork(uid: UUID, orderID: UUID, value: Boolean)
+    suspend fun findOrderByIdAndConsumerId(uid: UUID, orderID: UUID): OrderDB?
+
+    suspend fun setStatus(orderID: UUID, value: OrderFulfillmentStatus)
 
 }
 
@@ -52,7 +55,6 @@ class OrdersRepositoryImpl: OrdersRepository {
                 this.costOfWork = costOfWork
                 this.address = address
                 status = 0
-                atWork = false
                 dateOfAdded = OffsetDateTime.now()
                 this.executionDate = executionDate
             }
@@ -79,17 +81,24 @@ class OrdersRepositoryImpl: OrdersRepository {
                 .toDB()
         }
 
-    override suspend fun findOrderByID(id: UUID) =
+    override suspend fun findOrderByIdAndWorkerId(uid: UUID, orderID: UUID) =
         suspendTransaction {
             OrdersDAO
-                .find(OrdersTable.id eq id)
+                .find((OrdersTable.workerID eq uid) and (OrdersTable.id eq orderID))
                 .firstOrNull()?.toDB()
         }
 
-    override suspend fun atWork(uid: UUID, orderID: UUID, value: Boolean): Unit =
+    override suspend fun findOrderByIdAndConsumerId(uid: UUID, orderID: UUID) =
         suspendTransaction {
-            OrdersTable.update({(OrdersTable.workerID eq uid) and (OrdersTable.id eq orderID)}) {
-                it[atWork] = value
+            OrdersDAO
+                .find((OrdersTable.consumerID eq uid) and (OrdersTable.id eq orderID))
+                .firstOrNull()?.toDB()
+        }
+
+    override suspend fun setStatus(orderID: UUID, value: OrderFulfillmentStatus): Unit =
+        suspendTransaction {
+            OrdersTable.update({ OrdersTable.id eq orderID }) {
+                it[status] = value.status
             }
         }
 }

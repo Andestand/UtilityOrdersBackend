@@ -75,18 +75,23 @@ fun Route.consumerRoute(
         }
 
         get<MeRes.Orders.Order> {
-            try {
-                val id = UUID.fromString(it.id)
-                val order = ordersRepository.findOrderByID(id)
+            val uid = call.principal<UUID>()
 
-                if (order != null)
-                    call.respond(HttpStatusCode.OK, order.toSerial())
-                else
-                    call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+            if (uid != null)
+                try {
+                    val id = UUID.fromString(it.id)
+                    val order = ordersRepository.findOrderByIdAndConsumerId(uid, id)
 
-            } catch (_: IllegalArgumentException) {
+                    if (order != null)
+                        call.respond(HttpStatusCode.OK, order.toSerial())
+                    else
+                        call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+
+                } catch (_: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+                }
+            else
                 call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
-            }
         }
 
         post<MeRes.CreateOrder> {

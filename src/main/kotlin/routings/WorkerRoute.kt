@@ -14,6 +14,7 @@ import ru.utilityorders.backend.database.orders.OrdersRepository
 import ru.utilityorders.backend.database.worker.WorkerRepository
 import ru.utilityorders.backend.entities.JwtResponse
 import ru.utilityorders.backend.entities.Message
+import ru.utilityorders.backend.entities.OrderFulfillmentStatus
 import ru.utilityorders.backend.entities.ProfileResponse
 import ru.utilityorders.backend.entities.ResultList
 import ru.utilityorders.backend.entities.SignUpRequest
@@ -71,18 +72,22 @@ fun Route.workerRoute(
         }
 
         get<MeRes.Orders.Order> {
-            try {
-                val id = UUID.fromString(it.id)
-                val order = ordersRepository.findOrderByID(id)
+            val uid = call.principal<UUID>()
 
-                if (order != null)
-                    call.respond(HttpStatusCode.OK, order.toSerial())
-                else
-                    call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+            if (uid != null)
+                try {
+                    val orderID = UUID.fromString(it.id)
+                    val order = ordersRepository.findOrderByIdAndWorkerId(uid, orderID)
 
-            } catch (_: IllegalArgumentException) {
+                    if (order != null)
+                        call.respond(HttpStatusCode.NoContent)
+                    else
+                        call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+                } catch (_: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+                }
+            else
                 call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
-            }
         }
 
         post<MeRes.Orders.Order.ProceedToOrder> {
@@ -91,14 +96,52 @@ fun Route.workerRoute(
             if (uid != null)
                 try {
                     val orderID = UUID.fromString(it.parent.id)
-                    val order = ordersRepository.findOrderByID(orderID)
+                    val order = ordersRepository.findOrderByIdAndWorkerId(uid, orderID)
 
                     if (order != null) {
-                        ordersRepository.atWork(
-                            uid = uid,
-                            orderID = orderID,
-                            value = true
-                        )
+                        ordersRepository.setStatus(orderID, OrderFulfillmentStatus.IN_PROGRESS)
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+                    else
+                        call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+                } catch (_: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+                }
+            else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+        }
+
+        post<MeRes.Orders.Order.OrderCompleted> {
+            val uid = call.principal<UUID>()
+
+            if (uid != null)
+                try {
+                    val orderID = UUID.fromString(it.parent.id)
+                    val order = ordersRepository.findOrderByIdAndWorkerId(uid, orderID)
+
+                    if (order != null) {
+                        ordersRepository.setStatus(orderID, OrderFulfillmentStatus.COMPLETED)
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+                    else
+                        call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
+                } catch (_: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+                }
+            else
+                call.respond(HttpStatusCode.BadRequest, Message(INCORRECT_ID))
+        }
+
+        post<MeRes.Orders.Order.CancelOrder> {
+            val uid = call.principal<UUID>()
+
+            if (uid != null)
+                try {
+                    val orderID = UUID.fromString(it.parent.id)
+                    val order = ordersRepository.findOrderByIdAndWorkerId(uid, orderID)
+
+                    if (order != null) {
+                        ordersRepository.setStatus(orderID, OrderFulfillmentStatus.CANCEL)
                         call.respond(HttpStatusCode.NoContent)
                     }
                     else

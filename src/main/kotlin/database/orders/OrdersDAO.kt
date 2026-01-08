@@ -15,7 +15,6 @@ class OrdersDAO(id: EntityID<UUID>): UUIDEntity(id) {
     var costOfWork by OrdersTable.costOfWork
     var address by OrdersTable.address
     var status by OrdersTable.status
-    var atWork by OrdersTable.atWork
     var dateOfAdded by OrdersTable.dateOfAdded
     var executionDate by OrdersTable.executionDate
 }
