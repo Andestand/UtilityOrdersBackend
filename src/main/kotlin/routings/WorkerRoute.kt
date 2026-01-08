@@ -80,7 +80,7 @@ fun Route.workerRoute(
                     val order = ordersRepository.findOrderByIdAndWorkerId(uid, orderID)
 
                     if (order != null)
-                        call.respond(HttpStatusCode.NoContent)
+                        call.respond(order.toSerial())
                     else
                         call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
                 } catch (_: IllegalArgumentException) {
