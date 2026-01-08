@@ -83,7 +83,7 @@ fun Route.consumerRoute(
                     val order = ordersRepository.findOrderByIdAndConsumerId(uid, id)
 
                     if (order != null)
-                        call.respond(HttpStatusCode.OK, order.toSerial())
+                        call.respond(order.toSerial())
                     else
                         call.respond(HttpStatusCode.NotFound, Message(ORDER_NOT_FOUND))
 
