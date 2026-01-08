@@ -43,7 +43,6 @@ fun OrdersDAO.toDB() =
         workerID = workerID,
         costOfWork = costOfWork,
         address = address,
-        atWork = atWork,
         dateOfAdded = dateOfAdded,
         executionDate = executionDate
     )
@@ -70,7 +69,6 @@ fun OrderDB.toSerial() =
         workerID = workerID.toString(),
         costOfWork = costOfWork.toLong(),
         address = address,
-        atWork = atWork,
         dateOfAdded = dateOfAdded.toString()
     )
 

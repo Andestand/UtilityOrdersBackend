@@ -12,7 +12,6 @@ data class OrderDB(
     val consumerID: UUID,
     val costOfWork: BigDecimal,
     val address: String,
-    val atWork: Boolean,
     val dateOfAdded: OffsetDateTime,
     val executionDate: LocalDate
 )

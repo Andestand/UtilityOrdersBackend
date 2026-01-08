@@ -10,6 +10,5 @@ data class Order(
     val consumerID: String,
     val costOfWork: Long,
     val address: String,
-    val atWork: Boolean,
     val dateOfAdded: String
 )

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "ru.utilityorders.backend"
-version = "0.0.1"
+version = "1.0.0-alhpa1"
 
 application {
     mainClass = "ru.utilityorders.backend.ApplicationKt"
