@@ -1,4 +1,4 @@
-package ru.utilityorders.backend.entities
+package ru.utilityorders.backend.entities.serial
 
 import kotlinx.serialization.Serializable
 

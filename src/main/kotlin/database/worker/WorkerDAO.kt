@@ -1,13 +1,15 @@
 package ru.utilityorders.backend.database.worker
 
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import java.util.UUID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.UuidEntity
+import org.jetbrains.exposed.v1.dao.UuidEntityClass
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-class WorkerDAO(id: EntityID<UUID>): UUIDEntity(id) {
+@OptIn(ExperimentalUuidApi::class)
+class WorkerDAO(id: EntityID<Uuid>): UuidEntity(id) {
 
-    companion object: UUIDEntityClass<WorkerDAO>(WorkerTable)
+    companion object: UuidEntityClass<WorkerDAO>(WorkerTable)
 
     var firstName by WorkerTable.firstName
     var lastName by WorkerTable.lastName
@@ -19,9 +21,8 @@ class WorkerDAO(id: EntityID<UUID>): UUIDEntity(id) {
     var gettingStarted by WorkerTable.gettingStarted
 
     var userToken by WorkerTable.userToken
-    var userSecret by WorkerTable.userSecret
 
-    var dateOfBirth by WorkerTable.dateOfBirth
+    var dateBirth by WorkerTable.dateBirth
 
-    var dateOfRegistration by WorkerTable.dateOfRegistration
+    var createdAt by WorkerTable.createdAt
 }

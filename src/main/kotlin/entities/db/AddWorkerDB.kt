@@ -1,4 +1,4 @@
-package ru.utilityorders.backend.database.entities
+package ru.utilityorders.backend.entities.db
 
 import kotlinx.datetime.LocalDate
 
@@ -8,5 +8,5 @@ data class AddWorkerDB(
     val surname: String,
     val gender: String,
     val gettingStarted: LocalDate,
-    val dateOfBirth: LocalDate
+    val dateBirth: LocalDate
 )

@@ -1,11 +1,10 @@
-package ru.utilityorders.backend.entities
+package ru.utilityorders.backend.entities.db
 
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-class CredentialsConsumerDB(
+class CredentialsWorkerDB(
     val id: Uuid,
-    val email: String,
-    val password: String
+    val userToken: String
 )

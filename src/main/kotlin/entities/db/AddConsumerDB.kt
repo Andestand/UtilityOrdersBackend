@@ -1,4 +1,4 @@
-package ru.utilityorders.backend.database.entities
+package ru.utilityorders.backend.entities.db
 
 data class AddConsumerDB(
     val firstName: String,
