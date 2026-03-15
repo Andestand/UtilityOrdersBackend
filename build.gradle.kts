@@ -22,6 +22,7 @@ tasks.withType<Jar> {
 }
 
 dependencies {
+    implementation(libs.hikarycp)
     implementation(libs.argon2)
     implementation(libs.koin.ktor)
     implementation(libs.koin.logger.slf4j)

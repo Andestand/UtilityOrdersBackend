@@ -1,20 +1,22 @@
 package ru.utilityorders.backend.database.orders
 
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import java.util.UUID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.UuidEntity
+import org.jetbrains.exposed.v1.dao.UuidEntityClass
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-class OrdersDAO(id: EntityID<UUID>): UUIDEntity(id) {
+@OptIn(ExperimentalUuidApi::class)
+class OrdersDAO(id: EntityID<Uuid>): UuidEntity(id) {
 
-    companion object: UUIDEntityClass<OrdersDAO>(OrdersTable)
+    companion object: UuidEntityClass<OrdersDAO>(OrdersTable)
 
     var header by OrdersTable.header
     var workerID by OrdersTable.workerID
     var consumerID by OrdersTable.consumerID
     var costOfWork by OrdersTable.costOfWork
     var address by OrdersTable.address
-    var status by OrdersTable.status
-    var dateOfAdded by OrdersTable.dateOfAdded
-    var executionDate by OrdersTable.executionDate
+    var createdAt by OrdersTable.createdAt
+    var executionAt by OrdersTable.executionAt
+    var completedAt by OrdersTable.completedAt
 }

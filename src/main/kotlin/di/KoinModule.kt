@@ -9,6 +9,8 @@ import ru.utilityorders.backend.database.consumer.ConsumerRepository
 import ru.utilityorders.backend.database.consumer.ConsumerRepositoryImpl
 import ru.utilityorders.backend.database.orders.OrdersRepository
 import ru.utilityorders.backend.database.orders.OrdersRepositoryImpl
+import ru.utilityorders.backend.database.residential_addresses.ResidentialAddressesRepository
+import ru.utilityorders.backend.database.residential_addresses.ResidentialAddressesRepositoryImpl
 import ru.utilityorders.backend.database.worker.WorkerRepository
 import ru.utilityorders.backend.database.worker.WorkerRepositoryImpl
 
@@ -19,4 +21,5 @@ val KoinModule = module {
     singleOf(::WorkerRepositoryImpl) bind WorkerRepository::class
     singleOf(::OrdersRepositoryImpl) bind OrdersRepository::class
     singleOf(::ConsumerRepositoryImpl) bind ConsumerRepository::class
+    singleOf(::ResidentialAddressesRepositoryImpl) bind ResidentialAddressesRepository::class
 }

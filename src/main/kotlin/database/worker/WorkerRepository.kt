@@ -1,38 +1,38 @@
 package ru.utilityorders.backend.database.worker
 
 import de.mkammerer.argon2.Argon2
-import org.jetbrains.exposed.sql.update
-import ru.utilityorders.backend.database.entities.AddWorkerDB
-import ru.utilityorders.backend.database.entities.CredentialsWorkerDB
-import ru.utilityorders.backend.database.entities.WorkerDB
+import org.jetbrains.exposed.v1.core.eq
+import ru.utilityorders.backend.entities.db.AddWorkerDB
+import ru.utilityorders.backend.entities.db.CredentialsWorkerDB
+import ru.utilityorders.backend.entities.db.WorkerDB
 import ru.utilityorders.backend.utils.generateUserToken
 import ru.utilityorders.backend.utils.passwordToHash
 import ru.utilityorders.backend.utils.suspendTransaction
 import ru.utilityorders.backend.utils.toDB
-import java.time.OffsetDateTime
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface WorkerRepository {
 
-    suspend fun addUser(user: AddWorkerDB): String
+    suspend fun addUser(user: AddWorkerDB): Pair<Uuid, String>
 
-    suspend fun findUserByToken(token: String): Pair<UUID, String>?
+    suspend fun findUserByToken(token: String): Pair<Uuid, String>?
 
-    suspend fun findUserByUID(uid: UUID): WorkerDB?
+    suspend fun findUserByUID(uid: Uuid): WorkerDB?
 
-    suspend fun usersTokenList(): List<CredentialsWorkerDB>
+    suspend fun usersTokenList(): List<Pair<Uuid, String>>
 
     suspend fun workerList(): List<WorkerDB>
-
-    suspend fun updateUserSecret(uid: UUID): Boolean
 }
 
+@OptIn(ExperimentalUuidApi::class)
 class WorkerRepositoryImpl(private val argon: Argon2): WorkerRepository {
     override suspend fun addUser(user: AddWorkerDB) =
         suspendTransaction {
             val newToken = generateUserToken()
 
-            WorkerDAO.new {
+            val id = WorkerDAO.new {
                 firstName = user.firstName
                 lastName = user.lastName
                 surname = user.surname
@@ -40,14 +40,11 @@ class WorkerRepositoryImpl(private val argon: Argon2): WorkerRepository {
                 gender = user.gender
                 gettingStarted = user.gettingStarted
 
-                dateOfBirth = user.dateOfBirth
+                dateBirth = user.dateBirth
 
                 userToken = argon.passwordToHash(newToken)
-                userSecret = generateUserToken()
-
-                dateOfRegistration = OffsetDateTime.now()
-            }
-            newToken
+            }.id.value
+            id to newToken
         }
 
     override suspend fun findUserByToken(token: String) =
@@ -57,34 +54,19 @@ class WorkerRepositoryImpl(private val argon: Argon2): WorkerRepository {
             }.map { it.id.value to it.userToken }.firstOrNull()
         }
 
-    override suspend fun findUserByUID(uid: UUID) =
+    override suspend fun findUserByUID(uid: Uuid) =
         suspendTransaction {
-            WorkerDAO.find {
-                WorkerTable.id eq uid
-            }.map { it.toDB() }.firstOrNull()
+            WorkerDAO.findById(uid)?.toDB()
         }
 
     override suspend fun usersTokenList() =
         suspendTransaction {
             WorkerDAO.all()
-                .map {
-                    CredentialsWorkerDB(
-                        id = it.id.value,
-                        userToken = it.userToken,
-                        userSecret = it.userSecret
-                    )
-                }
+                .map { it.id.value to it.userToken }
         }
 
     override suspend fun workerList() =
         suspendTransaction {
-            WorkerDAO.all().map { it.toDB() }
-        }
-
-    override suspend fun updateUserSecret(uid: UUID) =
-        suspendTransaction {
-            WorkerTable.update({ WorkerTable.id eq uid }) {
-                it[userSecret] = generateUserToken()
-            } != 0
+            WorkerDAO.all().toDB()
         }
 }

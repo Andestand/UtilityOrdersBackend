@@ -1,13 +1,13 @@
-package ru.utilityorders.backend.entities
+package ru.utilityorders.backend.entities.serial
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-class SignUpRequest(
+data class WorkerSignUpForm(
     val firstName: String,
     val lastName: String,
     val surname: String,
     val gender: String,
     val gettingStarted: String,
-    val dateOfBirth: String
+    val dateBirth: String
 )

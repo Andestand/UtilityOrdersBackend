@@ -1,10 +1,9 @@
-package ru.utilityorders.backend.entities
+package ru.utilityorders.backend.entities.serial
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-class ConsumerSignUpRequest(
-    val firstName: String,
+class ConsumerSignInForm(
     val email: String,
     val password: String
 )

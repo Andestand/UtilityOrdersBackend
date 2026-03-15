@@ -1,10 +1,12 @@
-package ru.utilityorders.backend.database.entities
+package ru.utilityorders.backend.entities.db
 
 import java.time.OffsetDateTime
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 data class ConsumerDB(
-    val id: UUID,
+    val id: Uuid,
     val firstName: String,
     val email: String,
     val address: String?,

@@ -7,35 +7,50 @@ import io.ktor.server.application.Application
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
-import ru.utilityorders.backend.core.JWT_REALM
-import ru.utilityorders.backend.core.JWT_SECRET
-import ru.utilityorders.backend.entities.Message
 import ru.utilityorders.backend.utils.AUTHORIZATION_REQUIRED
-import java.util.UUID
+import ru.utilityorders.backend.utils.JWT_REALM
+import ru.utilityorders.backend.utils.JWT_SECRET
+import ru.utilityorders.backend.utils.toUuidOrNull
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 fun Application.securityPlugin() {
-    val secret = environment.config.property(JWT_SECRET).getString()
-    val realm = environment.config.property(JWT_REALM).getString()
+    val jwtSecret = environment.config.property(JWT_SECRET).getString()
+    val jwtRealm = environment.config.property(JWT_REALM).getString()
 
     authentication {
-        jwt {
+        jwt("access") {
             verifier {
                 JWT
-                    .require(Algorithm.HMAC256(secret))
+                    .require(Algorithm.HMAC256(jwtSecret))
+                    .withClaim("type", "access")
                     .build()
             }
 
             challenge { _, _ ->
-                call.respond(HttpStatusCode.Unauthorized, Message(AUTHORIZATION_REQUIRED))
+                call.respond(HttpStatusCode.Unauthorized, AUTHORIZATION_REQUIRED)
             }
 
-            validate {
-                try {
-                    UUID.fromString(it.subject)
-                } catch (_: IllegalArgumentException) { null }
+            validate { it.subject.toUuidOrNull() }
+
+            realm = jwtRealm
+        }
+
+        jwt("refresh") {
+            verifier {
+                JWT
+                    .require(Algorithm.HMAC256(jwtSecret))
+                    .withClaim("type", "refresh")
+                    .build()
             }
 
-            this.realm = realm
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized, AUTHORIZATION_REQUIRED)
+            }
+
+            validate { it.subject.toUuidOrNull() }
+
+            realm = jwtRealm
         }
     }
 }

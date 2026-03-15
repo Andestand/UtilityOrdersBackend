@@ -6,9 +6,11 @@ import kotlinx.serialization.Serializable
 data class Order(
     val id: String,
     val header: String,
-    val workerID: String,
-    val consumerID: String,
+    val workerName: String,
+    val consumerName: String,
     val costOfWork: Long,
     val address: String,
-    val dateOfAdded: String
+    val createdAt: String,
+    val executionAt: String,
+    val completedAt: String?
 )

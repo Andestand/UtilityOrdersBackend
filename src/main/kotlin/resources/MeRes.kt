@@ -1,6 +1,8 @@
 package ru.utilityorders.backend.resources
 
 import io.ktor.resources.Resource
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Resource("me")
 data class MeRes(val parent: ApiRes = ApiRes()) {
@@ -8,17 +10,11 @@ data class MeRes(val parent: ApiRes = ApiRes()) {
     @Resource("orders")
     data class Orders(val parent: MeRes = MeRes()) {
 
+        @OptIn(ExperimentalUuidApi::class)
         @Resource("{id}")
-        data class Order(val id: String, val parent: Orders = Orders()) {
-
-            @Resource("cancel_order")
-            data class CancelOrder(val parent: Order)
-
-            @Resource("proceed_to_order")
-            data class ProceedToOrder(val parent: Order)
-
-            @Resource("order_completed")
-            data class OrderCompleted(val parent: Order)
+        data class Order(val id: Uuid, val parent: Orders = Orders()) {
+            @Resource("completed")
+            data class Completed(val parent: Order)
         }
     }
 

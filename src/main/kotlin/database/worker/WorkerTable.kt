@@ -1,24 +1,24 @@
 package ru.utilityorders.backend.database.worker
 
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.kotlin.datetime.date
-import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import java.time.OffsetDateTime
 
-object WorkerTable: UUIDTable("workers") {
+object WorkerTable: UuidTable("workers") {
 
-    val firstName = varchar("first_name", 50)
-    val lastName = varchar("last_name", 50)
-    val surname = varchar("surname", 50)
+    val firstName = text("first_name")
+    val lastName = text("last_name")
+    val surname = text("surname")
 
     val orderLimit = integer("order_limit").default(10)
 
-    val gender = varchar("gender", 50)
+    val gender = text("gender")
     val gettingStarted = date("getting_started")
 
     val userToken = text("user_token").uniqueIndex()
-    val userSecret = text("user_secret").uniqueIndex()
 
-    val dateOfBirth = date("date_of_birth")
+    val dateBirth = date("date_birth")
 
-    val dateOfRegistration = timestampWithTimeZone("date_of_registration")
+    val createdAt = timestampWithTimeZone("created_at").default(OffsetDateTime.now())
 }

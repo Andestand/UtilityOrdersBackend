@@ -1,71 +1,129 @@
 package ru.utilityorders.backend.database.orders
 
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.update
-import ru.utilityorders.backend.database.entities.OrderDB
-import ru.utilityorders.backend.entities.OrderFulfillmentStatus
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.select
+import ru.utilityorders.backend.database.consumer.ConsumerRepository
+import ru.utilityorders.backend.database.consumer.ConsumerTable
+import ru.utilityorders.backend.database.residential_addresses.ResidentialAddressesTable
+import ru.utilityorders.backend.database.worker.WorkerTable
+import ru.utilityorders.backend.entities.db.OrderDB
+import ru.utilityorders.backend.utils.concatWS
 import ru.utilityorders.backend.utils.suspendTransaction
 import ru.utilityorders.backend.utils.toDB
 import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalUuidApi::class)
 interface OrdersRepository {
 
     suspend fun addOrder(
         header: String,
-        consumerID: UUID,
-        workerID: UUID,
+        consumerID: Uuid,
+        workerID: Uuid,
         costOfWork: BigDecimal,
-        address: String,
-        executionDate: LocalDate
+        executionAt: LocalDate
     )
 
-    suspend fun getOrdersByWorkerID(uid: UUID): List<OrderDB>
+    suspend fun getOrdersByUID(uid: Uuid): List<OrderDB>
 
     suspend fun orderList(): List<OrderDB>
 
-    suspend fun getOrdersByConsumerID(id: UUID): List<OrderDB>
+    suspend fun findOrderByIdAndWorkerId(uid: Uuid, orderID: Uuid): OrderDB?
 
-    suspend fun findOrderByIdAndWorkerId(uid: UUID, orderID: UUID): OrderDB?
-
-    suspend fun findOrderByIdAndConsumerId(uid: UUID, orderID: UUID): OrderDB?
-
-    suspend fun setStatus(orderID: UUID, value: OrderFulfillmentStatus)
+    suspend fun findOrderByIdAndConsumerId(uid: Uuid, orderID: Uuid): OrderDB?
 
 }
 
-class OrdersRepositoryImpl: OrdersRepository {
+@OptIn(ExperimentalUuidApi::class)
+class OrdersRepositoryImpl(private val consumerRepository: ConsumerRepository): OrdersRepository {
 
     override suspend fun addOrder(
         header: String,
-        consumerID: UUID,
-        workerID: UUID,
+        consumerID: Uuid,
+        workerID: Uuid,
         costOfWork: BigDecimal,
-        address: String,
-        executionDate: LocalDate
+        executionAt: LocalDate
     ): Unit =
         suspendTransaction {
+            val addressDefault = consumerRepository.getAddressDefault(consumerID)
+
             OrdersDAO.new {
                 this.header = header
                 this.consumerID = consumerID
                 this.workerID = workerID
                 this.costOfWork = costOfWork
-                this.address = address
-                status = 0
-                dateOfAdded = OffsetDateTime.now()
-                this.executionDate = executionDate
+                addressDefault?.let { this.address = it }
+                this.executionAt = executionAt
             }
         }
 
-    override suspend fun getOrdersByWorkerID(uid: UUID) =
+    override suspend fun getOrdersByUID(uid: Uuid) =
         suspendTransaction {
-            OrdersDAO
-                .find(OrdersTable.workerID eq uid)
-                .sortedBy { it.dateOfAdded }
-                .toDB()
+
+            val workerName = concatWS(
+                WorkerTable.lastName,
+                WorkerTable.firstName,
+                WorkerTable.surname
+            )
+
+            val consumerName = concatWS(
+                ConsumerTable.lastName,
+                ConsumerTable.firstName,
+                ConsumerTable.surname
+            )
+
+            val address = concatWS(
+                ", ",
+                ResidentialAddressesTable.city,
+                ResidentialAddressesTable.street,
+                ResidentialAddressesTable.house,
+                ResidentialAddressesTable.apartment
+            )
+
+            OrdersTable
+                .join(WorkerTable, JoinType.INNER) {
+                    OrdersTable.workerID eq WorkerTable.id
+                }
+                .join(ConsumerTable, JoinType.INNER) {
+                    OrdersTable.consumerID eq ConsumerTable.id
+                }
+                .join(ResidentialAddressesTable, JoinType.INNER) {
+                    OrdersTable.address eq ResidentialAddressesTable.id
+                }
+                .select(
+                    OrdersTable.id,
+                    OrdersTable.header,
+                    workerName,
+                    OrdersTable.workerID,
+                    consumerName,
+                    OrdersTable.costOfWork,
+                    address,
+                    OrdersTable.completedAt,
+                    OrdersTable.executionAt,
+                    OrdersTable.createdAt
+                )
+                .where {
+                    (OrdersTable.workerID eq uid) or (OrdersTable.consumerID eq uid)
+                }
+                .map {
+                    OrderDB(
+                        id = it[OrdersTable.id].value,
+                        header = it[OrdersTable.header],
+                        workerName = it[workerName],
+                        workerID = it[OrdersTable.workerID],
+                        consumerName = it[consumerName],
+                        costOfWork = it[OrdersTable.costOfWork],
+                        address = it[address],
+                        executionAt = it[OrdersTable.executionAt],
+                        completedAt = it[OrdersTable.completedAt],
+                        createdAt = it[OrdersTable.createdAt]
+                    )
+                }
         }
 
     override suspend fun orderList() =
@@ -73,32 +131,17 @@ class OrdersRepositoryImpl: OrdersRepository {
             OrdersDAO.all().map { it.toDB() }
         }
 
-    override suspend fun getOrdersByConsumerID(id: UUID) =
-        suspendTransaction {
-            OrdersDAO
-                .find(OrdersTable.workerID eq id)
-                .sortedBy { it.dateOfAdded }
-                .toDB()
-        }
-
-    override suspend fun findOrderByIdAndWorkerId(uid: UUID, orderID: UUID) =
+    override suspend fun findOrderByIdAndWorkerId(uid: Uuid, orderID: Uuid) =
         suspendTransaction {
             OrdersDAO
                 .find((OrdersTable.workerID eq uid) and (OrdersTable.id eq orderID))
                 .firstOrNull()?.toDB()
         }
 
-    override suspend fun findOrderByIdAndConsumerId(uid: UUID, orderID: UUID) =
+    override suspend fun findOrderByIdAndConsumerId(uid: Uuid, orderID: Uuid) =
         suspendTransaction {
             OrdersDAO
                 .find((OrdersTable.consumerID eq uid) and (OrdersTable.id eq orderID))
                 .firstOrNull()?.toDB()
-        }
-
-    override suspend fun setStatus(orderID: UUID, value: OrderFulfillmentStatus): Unit =
-        suspendTransaction {
-            OrdersTable.update({ OrdersTable.id eq orderID }) {
-                it[status] = value.status
-            }
         }
 }
