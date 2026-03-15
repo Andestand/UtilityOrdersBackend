@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.update
 import ru.utilityorders.backend.database.consumer.ConsumerRepository
 import ru.utilityorders.backend.database.consumer.ConsumerTable
 import ru.utilityorders.backend.database.residential_addresses.ResidentialAddressesTable
@@ -15,6 +16,7 @@ import ru.utilityorders.backend.utils.concatWS
 import ru.utilityorders.backend.utils.suspendTransaction
 import ru.utilityorders.backend.utils.toDB
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -37,6 +39,7 @@ interface OrdersRepository {
 
     suspend fun findOrderByIdAndConsumerId(uid: Uuid, orderID: Uuid): OrderDB?
 
+    suspend fun orderCompletedAt(uid: Uuid, orderID: Uuid)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -143,5 +146,12 @@ class OrdersRepositoryImpl(private val consumerRepository: ConsumerRepository): 
             OrdersDAO
                 .find((OrdersTable.consumerID eq uid) and (OrdersTable.id eq orderID))
                 .firstOrNull()?.toDB()
+        }
+
+    override suspend fun orderCompletedAt(uid: Uuid, orderID: Uuid): Unit =
+        suspendTransaction {
+            OrdersTable.update({ (OrdersTable.workerID eq uid) and (OrdersTable.id eq orderID) }) {
+                it[completedAt] = OffsetDateTime.now()
+            }
         }
 }

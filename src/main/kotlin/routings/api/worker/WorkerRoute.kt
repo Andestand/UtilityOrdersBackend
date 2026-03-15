@@ -1,5 +1,6 @@
 package ru.utilityorders.backend.routings.api.worker
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -30,10 +31,11 @@ fun Route.workerRoute(
             call.respond(list.toOrderSerial())
         }
 
-        postWrapperCheckValidId<MeRes.Orders.Order.Completed> { parent, uuid ->
+        postWrapperCheckValidId<MeRes.Orders.Order.Completed> { parent, uid ->
             val orderID = parent.parent.id
 
-
+            ordersRepository.orderCompletedAt(uid, orderID)
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
